@@ -1,0 +1,19 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python cache & compiler files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local pipeline downloaded media and outputs
+output/
+
+# Logs and scratch files
+*.log
+scratch/

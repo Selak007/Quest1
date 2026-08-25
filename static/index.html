@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Spoken Dialogue Frame Locator</title>
+    <!-- Google Fonts: Outfit and Fira Code for logs -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Task History -->
+        <aside class="sidebar glass">
+            <div class="logo">
+                <span class="icon">🎬</span>
+                <h2>Dialogue Locator</h2>
+            </div>
+            
+            <div class="history-section">
+                <h3>Recent Scans</h3>
+                <div id="historyList" class="history-list">
+                    <div class="history-empty">No scans yet</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            <header class="main-header">
+                <h1>Dialogue Localization Engine <span class="badge">v2.0</span></h1>
+                <p>Pinpoint video frames using two-pass Whisper ASR and forced alignment</p>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Submit Form Panel -->
+                <section class="card submission-card glass">
+                    <h2>Locate Dialogue</h2>
+                    <form id="locateForm">
+                        <div class="input-group">
+                            <label for="url">Video URL</label>
+                            <input type="url" id="url" required placeholder="YouTube, OK.ru, or other video link..." value="https://ok.ru/video/248244667877">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="target">Spoken Dialogue / Target Phrase</label>
+                            <input type="text" id="target" required placeholder="e.g. My mind rebels at stagnation" value="My mind rebels at stagnation">
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="btn-primary">
+                            <span>Execute Pipeline</span>
+                            <div class="glow-effect"></div>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Processing / Logs Panel -->
+                <section id="processingPanel" class="card processing-card glass hidden">
+                    <div class="card-header">
+                        <h2>Processing Task</h2>
+                        <span id="taskStatusBadge" class="status-badge pending">Pending</span>
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div class="progress-container">
+                        <div class="progress-header">
+                            <span id="progressLabel">Initializing video download...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="progressBar" class="progress-bar-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Step-by-Step checklist -->
+                    <div class="pipeline-steps">
+                        <div class="step pending" id="step-download">
+                            <span class="step-status">○</span>
+                            <span class="step-name">Video Ingestion</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step pending" id="step-audio">
+                            <span class="step-status">○</span>
+                            <span class="step-name">Audio Extraction</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step pending" id="step-vad">
+                            <span class="step-status">○</span>
+                            <span class="step-name">Voice Activity Detection (VAD)</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step pending" id="step-scan">
+                            <span class="step-status">○</span>
+                            <span class="step-name">ASR Pass 1: SCAN (tiny)</span>
+                            <span class="step-pct"></span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step pending" id="step-refine">
+                            <span class="step-status">○</span>
+                            <span class="step-name">ASR Pass 2: REFINE (small)</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step pending" id="step-align">
+                            <span class="step-status">○</span>
+                            <span class="step-name">Forced Word Alignment (WhisperX)</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step pending" id="step-extract">
+                            <span class="step-status">○</span>
+                            <span class="step-name">Frame Extraction & Verification</span>
+                            <span class="step-time"></span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Live Logger Terminal -->
+                    <div class="terminal-container">
+                        <div class="terminal-header">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                            <span class="terminal-title">live_pipeline_logs.log</span>
+                        </div>
+                        <div id="terminalBody" class="terminal-body">
+                            <div class="log-line system">Waiting for task execution...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Results Display Panel -->
+                <section id="resultsPanel" class="card results-card glass hidden">
+                    <h2>Localization Result</h2>
+                    
+                    <div class="result-layout">
+                        <!-- Left: Frame image preview -->
+                        <div class="frame-preview-container">
+                            <div class="frame-tag">Exact Frame</div>
+                            <img id="resultFrame" src="" alt="Extracted Frame image" class="frame-img">
+                            <div class="frame-controls">
+                                <a id="downloadFrameBtn" href="" download class="btn-secondary">Download Frame JPG</a>
+                            </div>
+                        </div>
+
+                        <!-- Right: Detailed metrics table & confidence -->
+                        <div class="result-details">
+                            <div class="metric-group confidence-card">
+                                <div class="metric-label">Composite Confidence</div>
+                                <div id="resultConfidence" class="metric-value badge-high">1.000</div>
+                                <div id="resultConfidenceStatus" class="metric-sub">HIGH CONFIDENCE</div>
+                            </div>
+
+                            <table class="metrics-table">
+                                <tr>
+                                    <td>Timestamp</td>
+                                    <td><strong id="resultTimestamp">00:00:00.000</strong> (<span id="resultTimestampSec">0.0s</span>)</td>
+                                </tr>
+                                <tr>
+                                    <td>Frame Number</td>
+                                    <td><strong id="resultFrameNumber">0</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Target Dialogue</td>
+                                    <td id="resultTargetText" class="italic">"..."</td>
+                                </tr>
+                                <tr>
+                                    <td>ASR Transcript</td>
+                                    <td id="resultAsrText" class="italic dim">"..."</td>
+                                </tr>
+                                <tr>
+                                    <td>Frame Window</td>
+                                    <td id="resultFrameWindow">0.0s -> 0.0s</td>
+                                </tr>
+                            </table>
+
+                            <div class="breakdown-container">
+                                <h3>Confidence Breakdown</h3>
+                                <div class="breakdown-bar">
+                                    <div class="bar-segment text" id="weightText" title="Text Match Score"><span>Text</span></div>
+                                    <div class="bar-segment asr" id="weightAsr" title="ASR Confidence"><span>ASR</span></div>
+                                    <div class="bar-segment vad" id="weightVad" title="VAD Alignment"><span>VAD</span></div>
+                                </div>
+                                <div class="breakdown-legend">
+                                    <span><span class="legend-dot text"></span> Text match: <span id="valText">0.0</span> (50%)</span>
+                                    <span><span class="legend-dot asr"></span> ASR quality: <span id="valAsr">0.0</span> (30%)</span>
+                                    <span><span class="legend-dot vad"></span> VAD agrees: <span id="valVad">0.0</span> (20%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Frontend logic inclusion -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
