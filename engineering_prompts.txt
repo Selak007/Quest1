@@ -4,12 +4,6 @@ Forget APIs for a second. What can go wrong? Can the model hallucinate? Let's un
 
 But there isn't any mention of caption in the PS sheet?
 
-What is overlay vs speech bubble?
-
-Yeah, they meant a speech bubble.
-
-No, it's not a speech bubble. You need to find the timestamp and first frame in which the dialogue is spoken.
-
 What is ASR?
 
 The problem statement looked very vague at start. How good have we nailed it down now?
@@ -58,16 +52,14 @@ it takes an hour with small for me need to speed up, any ideas
 
 now expalin the new workflow with an example
 
-can this be improved a bit further??
+can this be optimized a bit further?? need some work on the ASR bottleneck
 
-now check this architecture and rate this arch like you did before
+given a video url and a target spoken line, build a tool that finds the first frame where the line starts, its timestamp, frame number, dialogue text, and confidence/status. also give me navigation guidance and unit tests.
 
-Given a video URL and a target spoken line, build a dialogue frame localization tool that identifies: the first frame where that line begins being spoken, the timestamp and frame number, the dialogue text, and a confidence/status value. Provide a navigation guide and unit tests.
+make the whole setup cpu-only, default to whisper medium, and use composite confidence so we return a best-effort result while also supporting a strict verification mode.
 
-Configure the environment for CPU-only execution (no GPU), default to the "medium" Whisper model size, and establish a composite confidence behavior where a best-effort result is returned alongside a strict verification mode.
+use a two-pass pipeline for speed: first scan vad-filtered audio with whisper tiny using greedy decoding and no word timestamps. skip segments shorter than the target phrase, then run whisper small with beam search and forced alignment only on a 1-minute window around the rough match.
 
-Apply a two-pass hybrid pipeline to optimize speed: run a fast scan with a tiny model (greedy search, no word timestamps) over VAD-filtered audio; skip segments shorter than the target phrase duration; then run a small model with beam search and forced alignment only on a tight 1-minute window around the coarse match.
+wrap the system in a frontend dashboard and backend server. queue jobs sequentially to avoid cpu overload and stream live progress logs and status updates to the frontend.
 
-Build a frontend dashboard and backend server to encapsulate the dialogue localization application, providing sequential task queuing to prevent CPU overload, and streaming live progress logs and status updates to the client interface.
-
-Restructure the project documentation into a README.md (focusing on introduction, web packaging, and execution guides) and an approach.md detailing the problem statement, Mermaid architecture diagram, design evolution stages, ASR mechanics, confidence scoring metrics, results, and tradeoffs.
+split the documentation into readme.md and approach.md. readme.md should cover the project, web setup, navigation, and execution. approach.md should cover the problem, mermaid architecture, design evolution, asr, confidence scoring, results, and tradeoffs. keep everything conversational and lowercase.
