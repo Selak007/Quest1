@@ -39,8 +39,12 @@ Ensure Python 3.14 and ffmpeg/ffprobe are installed and available on your path. 
 # Activate the virtual environment
 .venv\Scripts\Activate.ps1
 
-# Install requirements
-pip install -r requirements.txt
+# Install requirements. For Python 3.14, whisperx must be installed without 
+# its strict dependencies to bypass the incompatible ctranslate2==4.4.0 check:
+pip install -r requirements.txt --no-deps
+pip install ctranslate2>=4.6.1
+pip install pandas transformers nltk faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich pytest pytest-cov
+pip install whisperx --no-deps
 
 # Install the package itself in editable mode
 pip install -e .
