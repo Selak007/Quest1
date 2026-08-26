@@ -33,5 +33,12 @@ echo "Installing whisperx..."
 echo "Installing dialogue_locator in editable mode..."
 .venv/bin/python -m pip install -e .
 
+# 8. Copy validation video to output cache for offline out-of-the-box processing
+echo "Copying validation video to local cache..."
+mkdir -p output/video
+if [ -f "docs/video/248244667877.mp4" ]; then
+    cp docs/video/248244667877.mp4 output/video/248244667877.mp4
+fi
+
 echo "Setup complete! You can now start the web server by running:"
 echo "  .venv/bin/python web_server.py"

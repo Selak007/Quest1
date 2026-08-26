@@ -32,5 +32,10 @@ echo Installing whisperx...
 echo Installing dialogue_locator in editable mode...
 .venv\Scripts\python.exe -m pip install -e .
 
+:: 8. Copy validation video to output cache for offline out-of-the-box processing
+echo Copying validation video to local cache...
+if not exist output\video mkdir output\video
+if exist docs\video\248244667877.mp4 copy docs\video\248244667877.mp4 output\video\248244667877.mp4 /Y >nul
+
 echo Setup complete! You can now start the web server by running:
 echo   .venv\Scripts\python.exe web_server.py
