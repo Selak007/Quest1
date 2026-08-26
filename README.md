@@ -34,21 +34,21 @@ The application is packaged as a lightweight, full-stack service to make it easy
 This section outlines how to configure, start, and run the pipeline locally.
 
 ### 1. Prerequisites and Installation
-Ensure Python 3.14 and ffmpeg/ffprobe are installed and available on your path. Then, configure the local environment:
+Ensure Python 3.14 and ffmpeg/ffprobe are installed and available on your path. Run the automated setup script for your operating system:
+
+**On Windows (PowerShell):**
 ```powershell
-# Activate the virtual environment
-.venv\Scripts\Activate.ps1
-
-# Install requirements. For Python 3.14, whisperx must be installed without 
-# its strict dependencies to bypass the incompatible ctranslate2==4.4.0 check:
-pip install -r requirements.txt --no-deps
-pip install ctranslate2>=4.6.1
-pip install pandas transformers nltk faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich pytest pytest-cov
-pip install whisperx --no-deps
-
-# Install the package itself in editable mode
-pip install -e .
+.\setup_env.ps1
 ```
+
+**On Linux / macOS (Terminal):**
+```bash
+chmod +x setup_env.sh
+./setup_env.sh
+```
+
+These scripts handle virtual environment creation, Python 3.14 compatibility workarounds, dependency resolution, and editable package installation automatically.
+
 
 ### 2. Launching the Web Server
 To start the FastAPI server and access the interactive web interface:
