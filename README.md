@@ -74,6 +74,8 @@ http://127.0.0.1:8000/
 ```
 In the browser, you can submit URLs, watch the live log console stream, view the active step-by-step checklist, and download the extracted frame image.
 
+*Note on Network Restrictions:* Platforms like OK.ru frequently employ strict region-blocking or SSL connection resets (WinError 10054) on automated scrapers. If the download fails, you can manually place the pre-downloaded video file (named by its video ID, e.g., `248244667877.mp4`) into the `output/video/` directory, and the pipeline will automatically detect and process it offline.
+
 ### 3. Running via Command Line (CLI)
 You can invoke the pipeline directly via terminal command:
 
