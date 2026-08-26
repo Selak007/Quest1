@@ -36,6 +36,11 @@ This section outlines how to configure, start, and run the pipeline locally.
 ### 1. Prerequisites and Installation
 Ensure Python 3.14 and ffmpeg/ffprobe are installed and available on your path. Run the automated setup script for your operating system:
 
+**On Windows (Command Prompt - cmd.exe):**
+```cmd
+setup_env.bat
+```
+
 **On Windows (PowerShell):**
 ```powershell
 .\setup_env.ps1
