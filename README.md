@@ -94,24 +94,3 @@ Available CLI options include:
 *   `--no-frame`: Skip frame extraction for a faster raw text scan.
 *   `--verbose, -v`: Enable debug level prints.
 
-### 4. Running Unit Tests
-Validate the pipeline modules (fully mocked inputs, no model downloads or internet needed):
-
-**On Windows:**
-```powershell
-# Run the entire test suite
-.venv\Scripts\pytest.exe tests/ -v
-
-# Run with test coverage metrics
-.venv\Scripts\pytest.exe tests/ --cov=dialogue_locator --cov-report=term-missing
-```
-
-**On Linux / macOS:**
-```bash
-# Run the entire test suite
-.venv/bin/pytest tests/ -v
-
-# Run with test coverage metrics
-.venv/bin/pytest tests/ --cov=dialogue_locator --cov-report=term-missing
-```
-

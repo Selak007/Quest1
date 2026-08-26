@@ -17,7 +17,7 @@ Write-Output "Installing setuptools..."
 
 # 4. Install standard packages (resolving all sub-dependencies)
 Write-Output "Installing core pipeline packages..."
-& .venv\Scripts\python.exe -m pip install torch torchaudio faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich pytest pytest-cov fastapi pydantic uvicorn
+& .venv\Scripts\python.exe -m pip install torch torchaudio faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich fastapi pydantic uvicorn
 
 # 5. Install Python 3.14 compatibility packages
 Write-Output "Installing Python 3.14 compatibility packages..."

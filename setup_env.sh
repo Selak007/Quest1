@@ -18,7 +18,7 @@ echo "Installing setuptools..."
 
 # 4. Install standard packages (resolving all sub-dependencies)
 echo "Installing core pipeline packages..."
-.venv/bin/python -m pip install torch torchaudio faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich pytest pytest-cov fastapi pydantic uvicorn
+.venv/bin/python -m pip install torch torchaudio faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich fastapi pydantic uvicorn
 
 # 5. Install Python 3.14 compatible CTranslate2 and dependencies
 echo "Installing Python 3.14 compatibility packages..."
