@@ -19,10 +19,10 @@ Write-Output "Installing setuptools..."
 Write-Output "Installing core pipeline packages..."
 & .venv\Scripts\python.exe -m pip install torch torchaudio faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich pytest pytest-cov fastapi pydantic uvicorn
 
-# 5. Install Python 3.14 compatible CTranslate2 and dependencies
+# 5. Install Python 3.14 compatibility packages
 Write-Output "Installing Python 3.14 compatibility packages..."
 & .venv\Scripts\python.exe -m pip install ctranslate2>=4.6.1
-& .venv\Scripts\python.exe -m pip install pandas transformers nltk
+& .venv\Scripts\python.exe -m pip install pandas transformers nltk pyannote.audio==3.1.1
 
 # 6. Install whisperx without pulling incompatible ctranslate2==4.4.0
 Write-Output "Installing whisperx..."

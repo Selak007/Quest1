@@ -23,7 +23,7 @@ echo "Installing core pipeline packages..."
 # 5. Install Python 3.14 compatible CTranslate2 and dependencies
 echo "Installing Python 3.14 compatibility packages..."
 .venv/bin/python -m pip install "ctranslate2>=4.6.1"
-.venv/bin/python -m pip install pandas transformers nltk
+.venv/bin/python -m pip install pandas transformers nltk pyannote.audio==3.1.1
 
 # 6. Install whisperx without pulling incompatible ctranslate2==4.4.0
 echo "Installing whisperx..."
