@@ -211,12 +211,13 @@ def transcribe_refine(
     wav_path: Path,
     onset_s: float,
     window_s: float = None,
+    win_start: float = None,
+    win_end: float = None,
 ) -> List[TranscriptSegment]:
     """
     Phase 2: Precise re-transcription on a tight window around the match.
 
-    Uses the small model with beam search and word-level timestamps for
-    high-accuracy WhisperX alignment in the subsequent stage.
+    Loads and transcribes only the sliced audio array for maximum speed.
 
     Parameters
     ----------
@@ -227,6 +228,10 @@ def transcribe_refine(
     window_s:
         Half-width of the refine window (default: config.REFINE_WINDOW_S).
         A ±window_s clip is extracted, so total clip = 2×window_s.
+    win_start:
+        Optional pre-calculated window start sample time.
+    win_end:
+        Optional pre-calculated window end sample time.
 
     Returns
     -------
@@ -238,20 +243,37 @@ def transcribe_refine(
     if window_s is None:
         window_s = config.REFINE_WINDOW_S
 
-    # Retrieve audio duration for clamping
-    try:
-        import soundfile as sf
-        duration_s = sf.info(str(wav_path)).duration
-    except Exception:
-        duration_s = float("inf")
-
-    win_start = max(0.0, onset_s - window_s)
-    win_end   = min(duration_s, onset_s + window_s)
+    if win_start is None or win_end is None:
+        # Retrieve audio duration for clamping
+        try:
+            import soundfile as sf
+            duration_s = sf.info(str(wav_path)).duration
+        except Exception:
+            duration_s = float("inf")
+        win_start = max(0.0, onset_s - window_s)
+        win_end   = min(duration_s, onset_s + window_s)
 
     logger.info(
         "[REFINE] Window: %.2fs → %.2fs (%.1fs total) around rough onset %.2fs",
         win_start, win_end, win_end - win_start, onset_s,
     )
+
+    # Slice the audio file to process ONLY the 60s window
+    sr = 16000
+    start_sample = int(win_start * sr)
+    frames_to_read = int((win_end - win_start) * sr)
+
+    import soundfile as sf
+    try:
+        audio_slice, _ = sf.read(str(wav_path), start=start_sample, frames=frames_to_read, dtype="float32")
+        if audio_slice.ndim > 1:
+            audio_slice = audio_slice[:, 0]
+    except Exception as read_err:
+        logger.warning(
+            "[REFINE] Sliced read failed (%s) - falling back to full audio path.",
+            read_err,
+        )
+        audio_slice = str(wav_path)
 
     kwargs = {
         "language": config.WHISPER_LANGUAGE,
@@ -261,37 +283,43 @@ def transcribe_refine(
         "log_prob_threshold": -1.0,
         "no_speech_threshold": 0.6,
         "condition_on_previous_text": True,
-        "clip_timestamps": [win_start, win_end],
     }
+
+    # If we fell back to the full WAV path, pass clip_timestamps
+    if isinstance(audio_slice, str):
+        kwargs["clip_timestamps"] = [win_start, win_end]
 
     logger.info(
         "[REFINE] Transcribing window with '%s' (beam=5, word-timestamps) …",
         config.WHISPER_REFINE_MODEL,
     )
-    segments_gen, _ = _refine_model.transcribe(str(wav_path), **kwargs)
+    segments_gen, _ = _refine_model.transcribe(audio_slice, **kwargs)
 
     results: List[TranscriptSegment] = []
+    # If we sliced the audio array, we need to shift the returned timestamps back to absolute time
+    shift = 0.0 if isinstance(audio_slice, str) else win_start
+
     for seg in segments_gen:
         words = []
         if seg.words:
             for w in seg.words:
                 words.append(WordToken(
                     word=w.word.strip(),
-                    start=w.start,
-                    end=w.end,
+                    start=w.start + shift,
+                    end=w.end + shift,
                     probability=w.probability,
                 ))
         results.append(TranscriptSegment(
             text=seg.text.strip(),
-            start=seg.start,
-            end=seg.end,
+            start=seg.start + shift,
+            end=seg.end + shift,
             avg_logprob=seg.avg_logprob,
             words=words,
         ))
         logger.info(
             "[REFINE] %d  %.2fs→%.2fs: %r",
             len(results),
-            seg.start, seg.end,
+            seg.start + shift, seg.end + shift,
             seg.text.strip(),
         )
 

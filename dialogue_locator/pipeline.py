@@ -188,13 +188,23 @@ def run_pipeline(
     # ── Stage 4c: Free scan model RAM before loading refine model ────────────
     unload_scan_model()
 
+    # Calculate refine window start/end boundaries to pass to both stages
+    window_s = config.REFINE_WINDOW_S
+    try:
+        import soundfile as sf
+        duration_s = sf.info(str(wav_path)).duration
+    except Exception:
+        duration_s = float("inf")
+    win_start = max(0.0, rough_onset_s - window_s)
+    win_end   = min(duration_s, rough_onset_s + window_s)
+
     # ── Stage 4d: REFINE — small model, beam, word-timestamps on ±window ──────
     with _stage("ASR Phase 2: REFINE (small, beam, word-timestamps)"):
-        refine_segs = transcribe_refine(wav_path, onset_s=rough_onset_s)
+        refine_segs = transcribe_refine(wav_path, onset_s=rough_onset_s, win_start=win_start, win_end=win_end)
 
     # ── Stage 5: Forced alignment (WhisperX) on refine window only ───────────
     with _stage("Forced Alignment (WhisperX)"):
-        aligned_words = align_transcript(wav_path, refine_segs)
+        aligned_words = align_transcript(wav_path, refine_segs, win_start=win_start, win_end=win_end)
 
     # ── Stage 6: Fuzzy match on precisely aligned words ───────────────────────
     with _stage("Fuzzy Phrase Match (refine)"):

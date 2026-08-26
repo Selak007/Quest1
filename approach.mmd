@@ -1,0 +1,19 @@
+graph TD
+    A[Start: URL & Target Phrase] --> B{Pre-Network Cache Check}
+    B -- Match Found --o D[Audio Extraction]
+    B -- Cache Miss --o C[Video Ingestion via yt-dlp]
+    C --> D
+    D --> E[Voice Activity Detection]
+    E --> F[VAD Gap Merging & Length Filtering]
+    F --> G[ASR Pass 1: SCAN via tiny & greedy]
+    G --> H[Fuzzy Phrase Match on Scan Output]
+    H --> I[Unload SCAN Model from Memory]
+    I --> J[ASR Pass 2: REFINE via small on ±30s Window]
+    J --> K[Forced Word Alignment via WhisperX]
+    K --> L[Precise Fuzzy Phrase Match]
+    L --> M[VAD Corroboration Check]
+    M --> N[ffprobe Frame PTS Lookup]
+    N --> O[Interval Containment Frame Mapping]
+    O --> P[Composite Confidence Scoring]
+    P --> Q[Frame Extraction via ffmpeg]
+    Q --> R[End: Present Result & Render UI]

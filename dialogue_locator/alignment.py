@@ -71,22 +71,42 @@ def _align_with_whisperx(
     transcript_segments: List[TranscriptSegment],
     language: str,
     device: str,
+    win_start: float = 0.0,
+    win_end: Optional[float] = None,
 ) -> List[AlignedWord]:
-    """Primary path: WhisperX forced alignment."""
+    """Primary path: WhisperX forced alignment on sliced audio."""
     _load_align_model(language_code=language, device=device)
 
     import soundfile as sf
-    audio_array, _ = sf.read(str(wav_path), dtype="float32")
+    sr = 16000
+    if win_end is not None:
+        start_sample = int(win_start * sr)
+        frames_to_read = int((win_end - win_start) * sr)
+        try:
+            audio_array, _ = sf.read(str(wav_path), start=start_sample, frames=frames_to_read, dtype="float32")
+            shift = win_start
+        except Exception as read_err:
+            logger.warning(
+                "WhisperX sliced audio read failed (%s) - falling back to full audio.",
+                read_err,
+            )
+            audio_array, _ = sf.read(str(wav_path), dtype="float32")
+            shift = 0.0
+    else:
+        audio_array, _ = sf.read(str(wav_path), dtype="float32")
+        shift = 0.0
+
     if audio_array.ndim > 1:
         audio_array = audio_array[:, 0]
 
+    # Build wx_segments shifted relative to the slice start (0.0)
     wx_segments = [
         {
             "text": seg.text,
-            "start": seg.start,
-            "end": seg.end,
+            "start": seg.start - shift,
+            "end": seg.end - shift,
             "words": [
-                {"word": w.word, "start": w.start, "end": w.end}
+                {"word": w.word, "start": w.start - shift, "end": w.end - shift}
                 for w in seg.words
             ],
         }
@@ -113,8 +133,8 @@ def _align_with_whisperx(
             aligned_words.append(
                 AlignedWord(
                     word=w.get("word", "").strip(),
-                    start=float(start),
-                    end=float(end),
+                    start=float(start) + shift,
+                    end=float(end) + shift,
                     score=float(w.get("score", 0.0)),
                     source="whisperx",
                 )
@@ -202,6 +222,8 @@ def align_transcript(
     transcript_segments: List[TranscriptSegment],
     language: str = None,
     device: str = None,
+    win_start: float = 0.0,
+    win_end: Optional[float] = None,
 ) -> List[AlignedWord]:
     """
     Run alignment on the transcript, using WhisperX if available, otherwise
@@ -221,6 +243,10 @@ def align_transcript(
         Language code (default: from config).
     device:
         'cpu' or 'cuda' (default: from config).
+    win_start:
+        Optional start sample time for sliced audio alignment.
+    win_end:
+        Optional end sample time for sliced audio alignment.
 
     Returns
     -------
@@ -240,7 +266,14 @@ def align_transcript(
 
     if _WHISPERX_AVAILABLE:
         try:
-            wx_words = _align_with_whisperx(wav_path, transcript_segments, lang, dev)
+            wx_words = _align_with_whisperx(
+                wav_path,
+                transcript_segments,
+                lang,
+                dev,
+                win_start=win_start,
+                win_end=win_end,
+            )
             # Fill any gaps WhisperX dropped with faster-whisper words
             return _fill_gaps(wx_words, fw_words)
         except Exception as exc:
