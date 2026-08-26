@@ -12,14 +12,24 @@ fi
 echo "Upgrading pip..."
 .venv/bin/python -m pip install --upgrade pip
 
-# 3. Install dependencies with Python 3.14 compatibility workaround
-echo "Installing packages..."
-.venv/bin/python -m pip install -r requirements.txt --no-deps
+# 3. Install setuptools to prevent editable backend compilation errors
+echo "Installing setuptools..."
+.venv/bin/python -m pip install setuptools
+
+# 4. Install standard packages (resolving all sub-dependencies)
+echo "Installing core pipeline packages..."
+.venv/bin/python -m pip install torch torchaudio faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich pytest pytest-cov
+
+# 5. Install Python 3.14 compatible CTranslate2 and dependencies
+echo "Installing Python 3.14 compatibility packages..."
 .venv/bin/python -m pip install "ctranslate2>=4.6.1"
-.venv/bin/python -m pip install pandas transformers nltk faster-whisper silero-vad soundfile rapidfuzz yt-dlp rich pytest pytest-cov
+.venv/bin/python -m pip install pandas transformers nltk
+
+# 6. Install whisperx without pulling incompatible ctranslate2==4.4.0
+echo "Installing whisperx..."
 .venv/bin/python -m pip install whisperx --no-deps
 
-# 4. Install the package in editable mode
+# 7. Install the package in editable mode
 echo "Installing dialogue_locator in editable mode..."
 .venv/bin/python -m pip install -e .
 
