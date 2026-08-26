@@ -166,6 +166,59 @@ The application is packaged as a lightweight, full-stack service to make it easy
 
 ---
 
+## Application Setup and Execution Guide
+
+This section outlines how to configure, start, and run the pipeline locally.
+
+### 1. Prerequisites and Installation
+Ensure Python 3.14 and ffmpeg/ffprobe are installed and available on your path. Then, configure the local environment:
+```powershell
+# Activate the virtual environment
+.venv\Scripts\Activate.ps1
+
+# Install requirements
+pip install -r requirements.txt
+
+# Install the package itself in editable mode
+pip install -e .
+```
+
+### 2. Launching the Web Server
+To start the FastAPI server and access the interactive web interface:
+```powershell
+python web_server.py --port 8000
+```
+Once the server starts, open your web browser and navigate to:
+```
+http://127.0.0.1:8000/
+```
+In the browser, you can submit URLs, watch the live log console stream, view the active step-by-step checklist, and download the extracted frame image.
+
+### 3. Running via Command Line (CLI)
+You can invoke the pipeline directly via terminal command:
+```powershell
+python cli.py --url "https://ok.ru/video/248244667877" --target "My mind rebels at stagnation"
+```
+Available CLI options include:
+*   `--url, -u`: The media URL (YouTube, OK.ru, etc.).
+*   `--target, -t`: The dialogue text to localize.
+*   `--output-dir, -o`: Custom directory for outputs (default: `./output`).
+*   `--no-frame`: Skip frame extraction for a faster raw text scan.
+*   `--verbose, -v`: Enable debug level prints.
+
+### 4. Running Unit Tests
+Validate the pipeline modules (fully mocked inputs, no model downloads or internet needed):
+```powershell
+# Run the entire test suite
+pytest tests/ -v
+
+# Run with test coverage metrics
+pytest tests/ --cov=dialogue_locator --cov-report=term-missing
+```
+
+---
+
 ## Conclusion
 
 By moving from a naive single-pass model to a hybrid two-pass architecture, the processing time for dialogue localization was reduced from over 50 minutes to under 3 minutes on CPU. The inclusion of pre-network caching, VAD merging, and precise frame PTS containment checks ensures the pipeline is robust against connection errors and frame-rate variations, delivering a reliable, production-ready solution.
+
