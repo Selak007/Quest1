@@ -13,6 +13,7 @@ import queue
 import threading
 import logging
 import time
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -30,9 +31,33 @@ from dialogue_locator import config as cfg
 logging.basicConfig(level=logging.INFO)
 root_logger = logging.getLogger()
 
-# In-memory database of tasks
+# In-memory database of tasks with JSON persistence
 TASKS: Dict[str, Dict[str, Any]] = {}
 current_task_id: List[Optional[str]] = [None]  # List wrapper for thread-safe updates
+
+TASKS_FILE = Path("./output/tasks.json")
+
+def save_tasks_to_disk():
+    try:
+        TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(TASKS_FILE, "w", encoding="utf-8") as f:
+            json.dump(TASKS, f, ensure_ascii=False, indent=2)
+    except Exception as err:
+        logging.error(f"[Server] Failed to save tasks to disk: {err}")
+
+def load_tasks_from_disk():
+    global TASKS
+    if TASKS_FILE.exists():
+        try:
+            with open(TASKS_FILE, "r", encoding="utf-8") as f:
+                TASKS = json.load(f)
+            logging.info(f"[Server] Loaded {len(TASKS)} tasks from disk.")
+        except Exception as err:
+            logging.error(f"[Server] Failed to load tasks from disk: {err}")
+            TASKS = {}
+    else:
+        TASKS = {}
+
 
 # Thread-safe Task log capturing handler
 class TaskLogHandler(logging.Handler):
@@ -81,6 +106,7 @@ def worker_thread_loop():
             task = TASKS[task_id]
             task["status"] = "running"
             current_task_id[0] = task_id
+            save_tasks_to_disk()
             
             logging.info(f"[Server] Starting Task {task_id}: {task['target']}")
             task["logs"].append(f"[Server] Task started at {datetime.now().strftime('%H:%M:%S')}")
@@ -123,6 +149,7 @@ def worker_thread_loop():
                 task["logs"].append(f"[Server] Error: {exc}")
             
             finally:
+                save_tasks_to_disk()
                 current_task_id[0] = None
                 task_queue.task_done()
                 
@@ -180,6 +207,7 @@ def create_locate_task(req: LocateRequest):
     }
     
     task_queue.put(task_id)
+    save_tasks_to_disk()
     return {"task_id": task_id, "status": "pending"}
 
 
@@ -279,6 +307,7 @@ if __name__ == "__main__":
         elif arg == "--port" and idx + 1 < len(sys.argv):
             port = int(sys.argv[idx + 1])
             
+    load_tasks_from_disk()
     print(f"\nDialogue Localization Web Application Starting!")
     print(f"URL: http://{host}:{port}/\n")
     
