@@ -57,9 +57,17 @@ These scripts handle virtual environment creation, Python 3.14 compatibility wor
 
 ### 2. Launching the Web Server
 To start the FastAPI server and access the interactive web interface:
+
+**On Windows:**
 ```powershell
-python web_server.py --port 8000
+.venv\Scripts\python.exe web_server.py --port 8000
 ```
+
+**On Linux / macOS:**
+```bash
+.venv/bin/python web_server.py --port 8000
+```
+
 Once the server starts, open your web browser and navigate to:
 ```
 http://127.0.0.1:8000/
@@ -68,9 +76,17 @@ In the browser, you can submit URLs, watch the live log console stream, view the
 
 ### 3. Running via Command Line (CLI)
 You can invoke the pipeline directly via terminal command:
+
+**On Windows:**
 ```powershell
-python cli.py --url "https://ok.ru/video/248244667877" --target "My mind rebels at stagnation"
+.venv\Scripts\python.exe cli.py --url "https://ok.ru/video/248244667877" --target "My mind rebels at stagnation"
 ```
+
+**On Linux / macOS:**
+```bash
+.venv/bin/python cli.py --url "https://ok.ru/video/248244667877" --target "My mind rebels at stagnation"
+```
+
 Available CLI options include:
 *   `--url, -u`: The media URL (YouTube, OK.ru, etc.).
 *   `--target, -t`: The dialogue text to localize.
@@ -80,10 +96,22 @@ Available CLI options include:
 
 ### 4. Running Unit Tests
 Validate the pipeline modules (fully mocked inputs, no model downloads or internet needed):
+
+**On Windows:**
 ```powershell
 # Run the entire test suite
-pytest tests/ -v
+.venv\Scripts\pytest.exe tests/ -v
 
 # Run with test coverage metrics
-pytest tests/ --cov=dialogue_locator --cov-report=term-missing
+.venv\Scripts\pytest.exe tests/ --cov=dialogue_locator --cov-report=term-missing
 ```
+
+**On Linux / macOS:**
+```bash
+# Run the entire test suite
+.venv/bin/pytest tests/ -v
+
+# Run with test coverage metrics
+.venv/bin/pytest tests/ --cov=dialogue_locator --cov-report=term-missing
+```
+
